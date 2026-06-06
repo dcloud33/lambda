@@ -210,6 +210,18 @@ Example Bedrock Prompt
 
 Phase 3 — Call Bedrock
 
+First, modify Lambda IAM Role
+Add to Lambda role:
+
+
+        {
+          "Effect": "Allow",
+          "Action": [
+            "bedrock:InvokeModel"
+          ],
+          "Resource": "*"
+        }
+
 Example (Claude)
 Moodify Lambda unused-token-detector.py
 
