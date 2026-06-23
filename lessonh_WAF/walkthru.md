@@ -1,4 +1,6 @@
 
+WAF LAB A
+
 Let's work on WAF.
 
 1. WAF logs are already going to CloudWatch.
@@ -80,6 +82,85 @@ Expected output:
         Why This Was Flagged:
         Recommended Analyst Actions:
         Short Executive Summary:
+
+
+
+
+WAF LAB B WAF Telemetry Database
+
+Objective
+
+Store WAF security events in DynamoDB so they can later be:
+
+        searched
+        correlated
+        enriched
+        analyzed by Bedrock
+        used for SOAR workflows
+
+Concept
+
+CloudWatch Logs are excellent for:
+
+        troubleshooting
+        operational visibility
+
+But terrible for:
+
+        correlation
+        analytics
+        threat history
+
+
+From Lab A we have: Current State---> WAF Event → CloudWatch 
+
+New State
+
+        WAF Event
+        → CloudWatch Log
+        → Lambda Parser
+        → DynamoDB
+
+Why We Need DynamoDB
+
+Imagine: IP 1.2.3.4 hits your API: 
+Monday: XSS attempt
+Tuesday:  SQL Injection
+Wednesday: Credential stuffing
+Thursday: Lizzo Injection
+
+CloudWatch sees individual events.
+
+DynamoDB lets us build: ---> Attack History
+
+DynamoDB Table Design
+
+You need a new Table: waf-events
+Partition Key:  event_id
+Type: String
+
+How your record should look in JSON
+
+        {
+          "event_id": "123456",
+          "timestamp": "2026-06-23T18:00:00Z",
+          "source_ip": "1.2.3.4",
+          "country": "RU",
+          "uri": "/python",
+          "method": "GET",
+          "action": "BLOCK",
+          "rule": "AWSManagedRulesCommonRuleSet"
+        }
+
+Lambda Enhancement
+
+Currently: print(ai_summary)
+Now: table.put_item(...)
+
+
+
+
+
 
 
 
