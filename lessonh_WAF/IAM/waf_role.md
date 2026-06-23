@@ -18,12 +18,12 @@ this is for both parts of the lab
             ],
             "Resource": "*"
           },
-         {
-           "Effect": "Allow",
-           "Action": [
-             "dynamodb:PutItem"
-           ],
-           "Resource": "arn:aws:dynamodb:<region>:<account-id>:table/waf-events"
+          {
+            "Effect": "Allow",
+            "Action": [
+              "dynamodb:PutItem"
+            ],
+            "Resource": "arn:aws:dynamodb:<region>:<account-id>:table/waf-events"
           }
         ]
       }
