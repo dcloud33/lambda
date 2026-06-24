@@ -8,7 +8,8 @@ from datetime import datetime, timedelta, timezone
 # for the second part of the lab
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table("waf-events")
-
+DYNAMODB_TABLE = os.environ["DYNAMODB_TABLE"]
+table = dynamodb.Table(DYNAMODB_TABLE)
 
 logs = boto3.client("logs")
 bedrock = boto3.client("bedrock-runtime")
@@ -59,12 +60,16 @@ def summarize_waf_event(waf_event):
         "method": http_request.get("httpMethod"),
         "uri": http_request.get("uri"),
         "args": http_request.get("args"),
+        "eventid": http_request.get("eventID"),
         "headers": http_request.get("headers", [])[:5]
     }
 
     return summary
 
-
+if "httpRequest" not in waf_event:
+    print("Malformed WAF record")
+    continue
+    
 def call_bedrock(waf_summary):
     prompt = f"""
 You are a SOC analyst assistant.
@@ -149,6 +154,9 @@ def lambda_handler(event, context):
         print(ai_summary)
         print("================================\n")
 
+        except Exception as e:
+        print(f"Bedrock error: {e}")
+    
     return {
         "statusCode": 200,
         "body": json.dumps({
