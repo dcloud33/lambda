@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 
 # for the second part of the lab
 dynamodb = boto3.resource("dynamodb")
-table = dynamodb.Table("waf-events")
+#table = dynamodb.Table("waf-events")
 DYNAMODB_TABLE = os.environ["DYNAMODB_TABLE"]
 table = dynamodb.Table(DYNAMODB_TABLE)
 
@@ -60,15 +60,12 @@ def summarize_waf_event(waf_event):
         "method": http_request.get("httpMethod"),
         "uri": http_request.get("uri"),
         "args": http_request.get("args"),
-        "eventid": http_request.get("eventID"),
         "headers": http_request.get("headers", [])[:5]
     }
 
     return summary
 
-if "httpRequest" not in waf_event:
-    print("Malformed WAF record")
-    continue
+
     
 def call_bedrock(waf_summary):
     prompt = f"""
@@ -101,7 +98,7 @@ Keep the answer concise and practical.
             }
         ]
     }
-
+    print("Invoking Bedrock...")
     response = bedrock.invoke_model(
         modelId=MODEL_ID,
         body=json.dumps(body)
@@ -109,7 +106,9 @@ Keep the answer concise and practical.
 
     response_body = json.loads(response["body"].read())
     return response_body["content"][0]["text"]
-
+    
+    print("Bedrock invocation successful")
+    
 # For the second part of the lab
 
 def save_to_dynamodb(waf_summary):
@@ -127,7 +126,7 @@ def save_to_dynamodb(waf_summary):
         }
     )
 
- print("Successfully saved event to DynamoDB")
+     print("Successfully saved event to DynamoDB")
     
 def lambda_handler(event, context):
     print("Starting WAF Bedrock analyzer")
@@ -142,11 +141,17 @@ def lambda_handler(event, context):
         }
 
     for waf_event in waf_events:
+
+        if "httpRequest" not in waf_event:
+            print("Malformed WAF record")
+            continue
+            
         waf_summary = summarize_waf_event(waf_event)
 
         print("Structured WAF Event:")
         print(json.dumps(waf_summary, indent=2))
         save_to_dynamodb(waf_summary)
+    try:
         
         ai_summary = call_bedrock(waf_summary)
 
@@ -154,7 +159,7 @@ def lambda_handler(event, context):
         print(ai_summary)
         print("================================\n")
 
-        except Exception as e:
+    except Exception as e:
         print(f"Bedrock error: {e}")
     
     return {
